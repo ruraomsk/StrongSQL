@@ -151,7 +151,7 @@ public class StrongSql {
                         SetValue value = new SetValue(id, tm, 0);
                         switch (l) {
                             case 1:
-                                value.setValue(buffer[pos] == 0 ? false : true);
+                                value.setValue((buffer[pos] != 0));
                                 break;
                             case 2:
                                 value.setValue(Util.ToShort(buffer, pos));

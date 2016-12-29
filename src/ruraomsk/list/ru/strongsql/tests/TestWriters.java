@@ -24,18 +24,26 @@ public class TestWriters {
 //        arraydesc.add(new DescrValue("testint", 2, 1));
 //        arraydesc.add(new DescrValue("testfloat", 3, 2));
 //        arraydesc.add(new DescrValue("testlong", 4, 3));
-        for (Integer i = 1; i < 5000; i++) {
+        for (Integer i = 1; i < 15; i++) {
             arraydesc.add(new DescrValue("test" + i.toString(), i, 1));
         }
 
 //        StrongSql stSQL=new StrongSql("float", "org.postgresql.Driver", "jdbc:postgresql://127.0.0.1:5432/testbase", "postgres", "162747");
         System.out.println("Начинаем создавать БД");
-        new StrongSql("temp", "org.postgresql.Driver", "jdbc:postgresql://127.0.0.1:5432/testbase", "postgres", "162747", arraydesc, 0, 500000L, "description");
-        System.out.println("БД создана");
+        ParamSQL param=new ParamSQL();
+        param.myDB="temp";
+        param.JDBCDriver="org.postgresql.Driver";
+        param.url="jdbc:postgresql://127.0.0.1:5433/testbase";
+        param.user="postgres";
+        param.password="162747";
+        new StrongSql(param, arraydesc, 0, 5000000L, "description");
+        System.out.println("База "+param.toString()+" создана...");
 
-        StrongSql stSQL = new StrongSql("temp", "org.postgresql.Driver", "jdbc:postgresql://127.0.0.1:5432/testbase", "postgres", "162747");
+        StrongSql stSQL = new StrongSql(param);
 
-        for (DescrValue dsv : stSQL.getNames()) {
+        System.out.println("База "+param.toString()+" открыта...");
+
+        for (DescrValue dsv : stSQL.getNames().values()) {
 //            System.out.println(dsv.toString());
             SetValue setV = new SetValue(dsv.getId(), Util.emptyValue(dsv.getType()));
             arrayValues.add(setV);
@@ -52,7 +60,7 @@ public class TestWriters {
                 sv.setValue(count);
             }
             stSQL.addValues(new Timestamp(System.currentTimeMillis()), arrayValues);
-            if ((count % 1000) == 0) {
+            if ((count % 100) == 0) {
                 System.out.println("Count=" + count.toString());
             }
         }

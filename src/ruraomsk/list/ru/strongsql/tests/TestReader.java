@@ -8,6 +8,7 @@ package ruraomsk.list.ru.strongsql.tests;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import ruraomsk.list.ru.strongsql.DescrValue;
+import ruraomsk.list.ru.strongsql.ParamSQL;
 import ruraomsk.list.ru.strongsql.SetValue;
 import ruraomsk.list.ru.strongsql.StrongSql;
 import ruraomsk.list.ru.strongsql.Util;
@@ -17,31 +18,42 @@ import ruraomsk.list.ru.strongsql.Util;
  * @author Yury Rusinov <ruraomsk@list.ru Automatics-A Omsk>
  */
 public class TestReader {
+
     public static void main(String[] args) throws InterruptedException {
-        
+
         ArrayList<SetValue> arrayValues = new ArrayList<>();
         ArrayList<DescrValue> arraydesc = new ArrayList<>();
+        ParamSQL param = new ParamSQL();
+        param.myDB = "temp";
+        param.JDBCDriver = "org.postgresql.Driver";
+        param.url = "jdbc:postgresql://127.0.0.1:5433/testbase";
+        param.user = "postgres";
+        param.password = "162747";
+        while (true) {
+            StrongSql stSQL = new StrongSql(param);
+            System.out.println("База " + param.toString() + " открыта...");
+            Long start = System.currentTimeMillis();
+            Integer count = 0;
+            for (DescrValue dsv : stSQL.getNames().values()) {
+                count++;
+                ArrayList<Integer> reqst = new ArrayList<>();
+                reqst.add(dsv.getId());
 
-        StrongSql stSQL = new StrongSql("temp", "org.postgresql.Driver", "jdbc:postgresql://127.0.0.1:5432/testbase", "postgres", "162747");
-        Long start=System.currentTimeMillis();
-        Integer count=0;
-        for (DescrValue dsv : stSQL.getNames()) {
-            count++;
-            ArrayList<Integer> reqst=new ArrayList<>();
-            reqst.add(dsv.getId());
+                Timestamp to = new Timestamp(System.currentTimeMillis() - 5000L);
 
-            Timestamp to=new Timestamp(System.currentTimeMillis()-5000L);
-            
-            Timestamp from=new Timestamp(System.currentTimeMillis()-360000L);
-            arrayValues=stSQL.seekData(from, to, reqst);
+                Timestamp from = new Timestamp(System.currentTimeMillis() - 360000L);
+                arrayValues = stSQL.seekData(from, to, reqst);
 //            for(SetValue sv:arrayValues){
 //                System.out.println(sv.toString());
 //            }
 //            break;
+            }
+            Long times = (System.currentTimeMillis() - start) / count;
+            System.out.println("time on one seek=" + times.toString());
+            Thread.sleep(10000L);
+            stSQL.disconnect();
+
         }
-        Long times=(System.currentTimeMillis()-start)/count;
-        System.out.println("time on one seek="+times.toString());
-        stSQL.disconnect();
     }
-    
+
 }

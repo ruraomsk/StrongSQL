@@ -7,7 +7,6 @@ package ruraomsk.list.ru.strongsql;
 
 import java.sql.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -21,12 +20,11 @@ public class StrongSql {
 
     Long SleepTime = 1000L;
     Integer DBtype;
-    String JDBCDriver;
     String myDBHead;
     String myDBHeader;
     String myDBData;
     Connection con;
-    HashMap<String, DescrValue> names;
+    TreeMap<String, DescrValue> names;
     HashMap<Integer, DescrValue> ids;
     ConcurrentLinkedQueue<SetData> outdata;
     Statement stmt;
@@ -34,31 +32,19 @@ public class StrongSql {
     Long TekPos;
     boolean errorSQL;
     Long LastPos;
-    String myDB;
-    String url;
-    String user;
-    String password;
+    ParamSQL paramSQL;
     WriteterSql wrSQL = null;
     CtrlSql ctrlSQL = null;
-
+    HashMap<String,Integer> bases;
     /**
      * Начинаем работать с существующей базой данных
      *
-     * @param myDB - имя таблицы
-     * @param JDBCDriver - драйвер
-     * @param url - путь к базе данных
-     * @param user - пользователь
-     * @param password - пароль
      */
-    public StrongSql(String myDB, String JDBCDriver, String url, String user, String password) {
-        this.myDB = myDB;
-        this.JDBCDriver = JDBCDriver;
-        this.url = url;
-        this.user = user;
-        this.password = password;
-        myDBHead = myDB + "_head";
-        myDBHeader = myDB + "_header";
-        myDBData = myDB + "_data";
+    public StrongSql(ParamSQL param) {
+        paramSQL = param;
+        myDBHead = paramSQL.myDB + "_head";
+        myDBHeader = paramSQL.myDB + "_header";
+        myDBData = paramSQL.myDB + "_data";
         errorSQL = true;
         outdata = new ConcurrentLinkedQueue<>();
         if (connectDB()) {
@@ -68,33 +54,56 @@ public class StrongSql {
 
         }
     }
+   
+    /**
+     * Конструктор с созданием списка таблиц
+     *
+     * @param param
+     * @param needbase
+     */
+    public StrongSql(ParamSQL param, boolean needbase) {
+        try {
+            paramSQL = param;
+            errorSQL = true;
+            if(!needbase) return;
+            myDBHead = paramSQL.myDB + "_head";
+            myDBHeader = paramSQL.myDB + "_header";
+            myDBData = paramSQL.myDB + "_data";
+            outdata = new ConcurrentLinkedQueue<>();
+            if (connectUrl()) {
+                errorSQL = false;
+//                String req = "SELECT tablename FROM pg_tables;";
+                bases=new HashMap<>();
+                String req="SELECT table_name FROM information_schema.tables  WHERE table_schema='public' AND table_type='BASE TABLE';";
+                ResultSet rs = stmt.executeQuery(req);
+                while (rs.next()) {
+                    String str=rs.getString(1);
+                    String name=str.substring(0,str.indexOf("_"));
+//                    System.err.println(name);
+                    bases.put(name, 0);
+                }
+            }
+        } catch (ClassNotFoundException | SQLException ex) {
+        }
+    }
 
     /**
      * Создаем базу данных на основе массива описаний полей
      *
-     * @param myDB - имя таблицы
-     * @param JDBCDriver - драйвер
-     * @param url - путь к базе данных
-     * @param user - пользователь
-     * @param password - пароль
      * @param arraydesc - массив описаний переменных
      * @param DBType - тип хранения данных 0-одна временная метка для всех.
      * 1-каждое значение имеет временную метку
      * @param maxSize - максимальное кол-во записей в циклическом буфере
      * @param description - название таблицы в читаемом виде
      */
-    public StrongSql(String myDB, String JDBCDriver, String url, String user, String password, ArrayList<DescrValue> arraydesc, Integer DBType, Long maxSize, String description) {
+    public StrongSql(ParamSQL param, ArrayList<DescrValue> arraydesc, Integer DBType, Long maxSize, String description) {
         try {
-            this.myDB = myDB;
-            this.JDBCDriver = JDBCDriver;
-            this.url = url;
-            this.user = user;
-            this.password = password;
-            myDBHead = myDB + "_head";
-            myDBHeader = myDB + "_header";
-            myDBData = myDB + "_data";
-            Class.forName(JDBCDriver);
-            con = DriverManager.getConnection(url, user, password);
+            paramSQL = param;
+            myDBHead = paramSQL.myDB + "_head";
+            myDBHeader = paramSQL.myDB + "_header";
+            myDBData = paramSQL.myDB + "_data";
+            Class.forName(paramSQL.JDBCDriver);
+            con = DriverManager.getConnection(paramSQL.url, paramSQL.user, paramSQL.password);
             stmt = con.createStatement();
             stmt.executeUpdate("drop table if exists " + myDBData + ";");
             stmt.executeUpdate("drop table if exists " + myDBHead + ";");
@@ -106,19 +115,22 @@ public class StrongSql {
             stmt.executeUpdate("insert into " + myDBHead + " (id,max,pos,last,type,description) values(1," + maxSize.toString() + ",0,0,"
                     + DBType.toString() + ",'" + description + "');");
             for (DescrValue dsv : arraydesc) {
-                stmt.executeUpdate("insert into " + myDBHeader + "(id,name,type) values (" + dsv.getId().toString()
-                        + ",'" + dsv.getName() + "'," + dsv.getType().toString() + "," + ");");
+                String str = "insert into " + myDBHeader + "(id,name,type) values (" + dsv.getId().toString()
+                        + ",'" + dsv.getName() + "'," + dsv.getType().toString() + ");";
+                stmt.executeUpdate(str);
             }
-            con.commit();
+//            con.commit();
             con.close();
         } catch (ClassNotFoundException | SQLException ex) {
             System.err.println("Error for create DataBase " + ex.getMessage());
         }
 
     }
-
+    public HashMap<String,Integer> getBases(){
+        return bases;
+    }
     /**
-     * Поиск в базе данных
+     * Поиск в базе данных по номерам переменных
      *
      * @param from - время от
      * @param to - время до
@@ -127,6 +139,7 @@ public class StrongSql {
      */
     public ArrayList<SetValue> seekData(Timestamp from, Timestamp to, ArrayList<Integer> idseek) {
         try {
+//            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
             ArrayList<SetValue> result = new ArrayList<>();
             TreeMap<Integer, Integer> seek = new TreeMap<>();
@@ -206,11 +219,16 @@ public class StrongSql {
         }
     }
 
+    private boolean connectUrl() throws ClassNotFoundException, SQLException {
+        Class.forName(paramSQL.JDBCDriver);
+        con = DriverManager.getConnection(paramSQL.url, paramSQL.user, paramSQL.password);
+        stmt = con.createStatement();
+        return true;
+    }
+
     private boolean connectDB() {
         try {
-            Class.forName(JDBCDriver);
-            con = DriverManager.getConnection(url, user, password);
-            stmt = con.createStatement();
+            connectUrl();
             String rez = "SELECT * FROM " + myDBHead + " WHERE id=1";
             ResultSet rr = stmt.executeQuery(rez);
             rr.next();
@@ -218,7 +236,7 @@ public class StrongSql {
             TekPos = rr.getLong("pos");
             LastPos = rr.getLong("last");
             DBtype = rr.getInt("type");
-            names = new HashMap();
+            names = new TreeMap();
             ids = new HashMap();
             rez = "SELECT * FROM " + myDBHeader;
             rr = stmt.executeQuery(rez);
@@ -262,8 +280,8 @@ public class StrongSql {
      *
      * @return - массив описаний переменных
      */
-    public Collection<DescrValue> getNames() {
-        return names.values();
+    public TreeMap<String, DescrValue> getNames() {
+        return isconnected() ? names : null;
     }
 
     class WriteterSql extends Thread {
@@ -289,6 +307,7 @@ public class StrongSql {
 //                    System.out.println(value.toString());
                     try {
                         String rez;
+                        preparedStatement = con.prepareStatement("begin;");
                         if (LastPos > MaxLenght) {
                             // ? - место вставки нашего значеня
                             preparedStatement = con.prepareStatement("UPDATE " + myDBData + " SET tm=? ,var=? WHERE id='" + TekPos.toString() + "';");
@@ -308,8 +327,14 @@ public class StrongSql {
                         }
                         rez = "UPDATE " + myDBHead + " SET pos=" + TekPos.toString() + ", last=" + LastPos.toString() + " WHERE id=1";
                         stmt.executeUpdate(rez);
+                        preparedStatement = con.prepareStatement("commit;");
                     } catch (SQLException ex) {
-                        // Возвращаем обратно данные
+                        try {
+                            // Возвращаем обратно данные
+                            preparedStatement = con.prepareStatement("rollback;");
+                        } catch (SQLException ex1) {
+                        }
+
                         System.out.println("Error writer " + ex.getMessage());
                         outdata.add(value);
                         errorSQL = true;

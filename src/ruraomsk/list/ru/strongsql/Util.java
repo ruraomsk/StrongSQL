@@ -147,9 +147,10 @@ public class Util {
         for (SetValue value : arvalue) {
             DescrValue dv = ids.get(value.getId());
             if (dv == null) {
+                System.err.println("StrongSQL нет такого id="+value.getId());
                 continue;
             }
-            LenBuffer += 3 + dv.getLenght();
+            LenBuffer += 5 + dv.getLenght();
             if (DBtype == 1) {
                 LenBuffer += 8;
             }
@@ -159,10 +160,11 @@ public class Util {
         for (SetValue sv : arvalue) {
             DescrValue ds = ids.get(sv.getId());
             if (ds == null) {
+                System.err.println("StrongSQL нет такого id="+sv.getId());
                 continue;
             }
-            Util.ShortToBuff(buffer, pos, sv.getId());
-            pos += 2;
+            Util.IntegerToBuff(buffer, pos, sv.getId());
+            pos += 4;
             buffer[pos++] = (byte) (ds.getLenght() & 0xff);
             if (DBtype == 1) {
                 Util.LongToBuff(buffer, pos, sv.getTime());
@@ -181,6 +183,11 @@ public class Util {
                     break;
                 case 3:
                     LongToBuff(buffer, pos, (long) sv.getValue());
+                    pos+=8;
+                    break;
+                case 4:
+                    buffer[pos++]=(byte)sv.getValue();
+                    break;
             }
 
         }
@@ -203,6 +210,8 @@ public class Util {
                 return 0.0f;
             case 3:
                 return 0L;
+            case 4:
+                return 0;
         }
         return null;
     }

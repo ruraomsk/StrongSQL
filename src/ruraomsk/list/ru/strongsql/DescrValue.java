@@ -67,8 +67,11 @@ public class DescrValue {
                 return 4;
             case 3:
                 return 8;
+            case 4:
+                return 1;
         }
-        return 0;
+        System.err.println("Ошибка типа в DescrValue");
+        return 1;
     }
 
 }

@@ -141,10 +141,11 @@ public class StrongSql {
         try {
 //            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
+            Integer type=null;
             ArrayList<SetValue> result = new ArrayList<>();
             TreeMap<Integer, Integer> seek = new TreeMap<>();
             for (Integer id : idseek) {
-                seek.put(id, id);
+                seek.put(id, ids.get(id).getType());
             }
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
             ResultSet rs = stmt.executeQuery(rez);
@@ -153,28 +154,41 @@ public class StrongSql {
                 buffer = rs.getBytes("var");
                 int pos = 0;
                 while (pos < buffer.length) {
-                    int id = Util.ToShort(buffer, pos);
-                    pos += 2;
+//                    System.err.print(".");
+                    int id = Util.ToInteger(buffer, pos);
+                    pos += 4;
                     int l = buffer[pos++];
-                    if (seek.containsKey(id)) {
+                    if(l==0){
+                        
+                        System.err.println("Длина ноль у "+id);
+                        break;
+                    }
+                    if ((type=seek.get(id))!=null) {
                         if (DBtype == 1) {
                             tm = Util.ToLong(buffer, pos);
                             pos += 8;
                         }
+//                        System.err.print("!");
                         SetValue value = new SetValue(id, tm, 0);
-                        switch (l) {
-                            case 1:
+                        switch (type) {
+                            case 0:
                                 value.setValue((buffer[pos] != 0));
                                 break;
-                            case 2:
+                            case 1:
                                 value.setValue(Util.ToShort(buffer, pos));
                                 break;
-                            case 4:
+                            case 2:
                                 value.setValue(Util.ToFloat(buffer, pos));
                                 break;
-                            case 8:
+                            case 3:
                                 value.setValue(Util.ToLong(buffer, pos));
                                 break;
+                            case 4:
+                                value.setValue(buffer[pos]);
+                                break;
+                            default:
+                                    System.err.println("\n Неизвестный тип"+type);
+                                
                         }
                         pos += l;
                         result.add(value);
@@ -186,6 +200,7 @@ public class StrongSql {
                     }
 
                 }
+                System.err.println();
             }
             return result;
         } catch (SQLException ex) {

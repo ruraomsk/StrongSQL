@@ -168,6 +168,7 @@ public class Util {
             buffer[pos++] = (byte) (ds.getLenght() & 0xff);
             if (DBtype == 1) {
                 Util.LongToBuff(buffer, pos, sv.getTime());
+                pos+=8;
             }
             switch (ds.getType()) {
                 case 0:
@@ -211,7 +212,7 @@ public class Util {
             case 3:
                 return 0L;
             case 4:
-                return 0;
+                return (byte)0;
         }
         return null;
     }

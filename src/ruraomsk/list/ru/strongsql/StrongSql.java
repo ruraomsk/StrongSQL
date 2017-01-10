@@ -134,19 +134,15 @@ public class StrongSql {
      *
      * @param from - время от
      * @param to - время до
-     * @param idseek - иассив переменных для поиска
+     * @param idseek - переменная для поиска
      * @return - возвращает массив значений переменных с метками времени
      */
-    public ArrayList<SetValue> seekData(Timestamp from, Timestamp to, ArrayList<Integer> idseek) {
+    public ArrayList<SetValue> seekData(Timestamp from, Timestamp to, int idseek) {
         try {
 //            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
-            Integer type=null;
+            Integer type=ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
-            TreeMap<Integer, Integer> seek = new TreeMap<>();
-            for (Integer id : idseek) {
-                seek.put(id, ids.get(id).getType());
-            }
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
             ResultSet rs = stmt.executeQuery(rez);
             while (rs.next()) {
@@ -158,12 +154,11 @@ public class StrongSql {
                     int id = Util.ToInteger(buffer, pos);
                     pos += 4;
                     int l = buffer[pos++];
-                    if(l==0){
-                        
-                        System.err.println("Длина ноль у "+id);
+                    if(l<=0){
+                        System.err.println("Длина "+l+" у "+id);
                         break;
                     }
-                    if ((type=seek.get(id))!=null) {
+                    if (id==idseek) {
                         if (DBtype == 1) {
                             tm = Util.ToLong(buffer, pos);
                             pos += 8;
@@ -200,10 +195,13 @@ public class StrongSql {
                     }
 
                 }
-                System.err.println();
+//                System.err.println();
             }
+//            System.err.println("++++++++++++++");
+            
             return result;
         } catch (SQLException ex) {
+            System.err.println("Ошибка SQL "+ex.getMessage());
             return null;
         }
 

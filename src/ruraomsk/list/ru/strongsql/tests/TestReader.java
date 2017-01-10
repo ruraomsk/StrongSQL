@@ -36,13 +36,11 @@ public class TestReader {
             Integer count = 0;
             for (DescrValue dsv : stSQL.getNames().values()) {
                 count++;
-                ArrayList<Integer> reqst = new ArrayList<>();
-                reqst.add(dsv.getId());
 
                 Timestamp to = new Timestamp(System.currentTimeMillis() - 5000L);
 
                 Timestamp from = new Timestamp(System.currentTimeMillis() - 360000L);
-                arrayValues = stSQL.seekData(from, to, reqst);
+                arrayValues = stSQL.seekData(from, to, dsv.getId());
 //            for(SetValue sv:arrayValues){
 //                System.out.println(sv.toString());
 //            }

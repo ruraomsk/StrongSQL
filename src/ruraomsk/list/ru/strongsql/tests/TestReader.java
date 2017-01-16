@@ -26,7 +26,7 @@ public class TestReader {
         ParamSQL param = new ParamSQL();
         param.myDB = "temp";
         param.JDBCDriver = "org.postgresql.Driver";
-        param.url = "jdbc:postgresql://127.0.0.1:5433/testbase";
+        param.url = "jdbc:postgresql://192.168.1.70:5432/testbase";
         param.user = "postgres";
         param.password = "162747";
         while (true) {

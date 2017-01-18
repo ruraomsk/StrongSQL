@@ -15,21 +15,37 @@ public class SetValue {
     private Integer id;
     private Long time;
     private Object value;
+    private byte good;
 
     public SetValue(Integer id, Long time, Object value) {
         this.id = id;
         this.time = time;
         this.value = value;
+        good=0;
+    }
+    public SetValue(Integer id, Long time, Object value,byte good) {
+        this.id = id;
+        this.time = time;
+        this.value = value;
+        this.good=good;
     }
     public SetValue(Integer id,  Object value) {
         this.id = id;
         this.time = 0L;
         this.value = value;
+        good=0;
     }
+    public SetValue(Integer id,  Object value,byte good) {
+        this.id = id;
+        this.time = 0L;
+        this.value = value;
+        this.good=good;
+    }
+    
 
     @Override
     public String toString() {
-        return "="+id.toString()+" ["+value.toString()+"] "+(time!=0L?new Date(time).toString():""); //To change body of generated methods, choose Tools | Templates.
+        return "="+id.toString()+" ["+value.toString()+"] "+(time!=0L?new Date(time).toString():"")+(good!=0?"!":""); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
@@ -59,6 +75,11 @@ public class SetValue {
     public void setValue(Object value) {
         this.value = value;
     }
-   
+    public void setGood(byte good){
+        this.good=good;
+    }
+    public byte getGood(){
+        return good;
+    }
     
 }

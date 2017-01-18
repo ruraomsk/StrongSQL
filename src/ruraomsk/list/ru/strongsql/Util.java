@@ -150,7 +150,7 @@ public class Util {
                 System.err.println("StrongSQL нет такого id="+value.getId());
                 continue;
             }
-            LenBuffer += 5 + dv.getLenght();
+            LenBuffer += 6 + dv.getLenght();
             if (DBtype == 1) {
                 LenBuffer += 8;
             }
@@ -190,6 +190,7 @@ public class Util {
                     buffer[pos++]=(byte)sv.getValue();
                     break;
             }
+            buffer[pos++]=sv.getGood();
 
         }
         return buffer;

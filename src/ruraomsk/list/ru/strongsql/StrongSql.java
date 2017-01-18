@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Библиотека для работы с сохраненными значениями переменных
@@ -18,29 +20,37 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  */
 public class StrongSql {
 
-    Long SleepTime = 1000L;
-    Integer DBtype;
-    String myDBHead;
-    String myDBHeader;
-    String myDBData;
-    Connection con;
-    TreeMap<String, DescrValue> names;
-    HashMap<Integer, DescrValue> ids;
-    ConcurrentLinkedQueue<SetData> outdata;
-    Statement stmt;
-    Long MaxLenght;
-    Long TekPos;
-    boolean errorSQL;
-    Long LastPos;
-    ParamSQL paramSQL;
-    WriteterSql wrSQL = null;
-    CtrlSql ctrlSQL = null;
-    HashMap<String,Integer> bases;
+    private Long SleepTime = 1000L;
+    private Integer DBtype;
+    private String myDBHead;
+    private String myDBHeader;
+    private String myDBData;
+    private Connection con;
+    private TreeMap<String, DescrValue> names;
+    private HashMap<Integer, DescrValue> ids;
+    private ConcurrentLinkedQueue<SetData> outdata;
+    private Statement stmt;
+    private Long MaxLenght;
+    private Long TekPos;
+    private boolean errorSQL;
+    private Long LastPos;
+    private ParamSQL paramSQL;
+    private WriteterSql wrSQL = null;
+    private CtrlSql ctrlSQL = null;
+    private HashMap<String, Integer> bases;
+
     /**
      * Начинаем работать с существующей базой данных
      *
      */
     public StrongSql(ParamSQL param) {
+        startWork(param);
+    }
+    public StrongSql(ParamSQL param,Long SleepTime) {
+        this.SleepTime=SleepTime;
+        startWork(param);
+    }
+    private void startWork(ParamSQL param){
         paramSQL = param;
         myDBHead = paramSQL.myDB + "_head";
         myDBHeader = paramSQL.myDB + "_header";
@@ -53,8 +63,8 @@ public class StrongSql {
             ctrlSQL = new CtrlSql();
 
         }
+        
     }
-   
     /**
      * Конструктор с созданием списка таблиц
      *
@@ -65,7 +75,9 @@ public class StrongSql {
         try {
             paramSQL = param;
             errorSQL = true;
-            if(!needbase) return;
+            if (!needbase) {
+                return;
+            }
             myDBHead = paramSQL.myDB + "_head";
             myDBHeader = paramSQL.myDB + "_header";
             myDBData = paramSQL.myDB + "_data";
@@ -73,14 +85,17 @@ public class StrongSql {
             if (connectUrl()) {
                 errorSQL = false;
 //                String req = "SELECT tablename FROM pg_tables;";
-                bases=new HashMap<>();
-                String req="SELECT table_name FROM information_schema.tables  WHERE table_schema='public' AND table_type='BASE TABLE';";
+                bases = new HashMap<>();
+                String req = "SELECT table_name FROM information_schema.tables  WHERE table_schema='public' AND table_type='BASE TABLE';";
                 ResultSet rs = stmt.executeQuery(req);
                 while (rs.next()) {
-                    String str=rs.getString(1);
-                    String name=str.substring(0,str.indexOf("_"));
+                    String str = rs.getString(1);
+                    if (str.indexOf("_") > 0) {
+                        String name = str.substring(0, str.indexOf("_"));
 //                    System.err.println(name);
-                    bases.put(name, 0);
+                        bases.put(name, 0);
+
+                    }
                 }
             }
         } catch (ClassNotFoundException | SQLException ex) {
@@ -126,9 +141,11 @@ public class StrongSql {
         }
 
     }
-    public HashMap<String,Integer> getBases(){
+
+    public HashMap<String, Integer> getBases() {
         return bases;
     }
+
     /**
      * Поиск в базе данных по номерам переменных
      *
@@ -141,7 +158,7 @@ public class StrongSql {
         try {
 //            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
-            Integer type=ids.get(idseek).getType();
+            Integer type = ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
             ResultSet rs = stmt.executeQuery(rez);
@@ -154,11 +171,11 @@ public class StrongSql {
                     int id = Util.ToInteger(buffer, pos);
                     pos += 4;
                     int l = buffer[pos++];
-                    if(l<=0){
-                        System.err.println("Длина "+l+" у "+id);
+                    if (l <= 0) {
+                        System.err.println("Длина " + l + " у " + id);
                         break;
                     }
-                    if (id==idseek) {
+                    if (id == idseek) {
                         if (DBtype == 1) {
                             tm = Util.ToLong(buffer, pos);
                             pos += 8;
@@ -182,26 +199,28 @@ public class StrongSql {
                                 value.setValue(buffer[pos]);
                                 break;
                             default:
-                                    System.err.println("\n Неизвестный тип"+type);
-                                
+                                System.err.println("\n Неизвестный тип" + type);
+
                         }
                         pos += l;
+                        value.setGood(buffer[pos++]);
                         result.add(value);
                     } else {
                         if (DBtype != 0) {
                             pos += 8;
                         }
                         pos += l;
+                        pos++;
                     }
 
                 }
 //                System.err.println();
             }
 //            System.err.println("++++++++++++++");
-            
+
             return result;
         } catch (SQLException ex) {
-            System.err.println("Ошибка SQL "+ex.getMessage());
+            System.err.println("Ошибка SQL " + ex.getMessage());
             return null;
         }
 
@@ -224,11 +243,15 @@ public class StrongSql {
             if (wrSQL == null) {
                 return;
             }
+
             wrSQL.interrupt();
+            wrSQL.join(SleepTime*2);
             ctrlSQL.interrupt();
+            ctrlSQL.join(SleepTime*2);
+
             con.commit();
             con.close();
-        } catch (SQLException ex) {
+        } catch (SQLException | InterruptedException ex) {
         }
     }
 
@@ -341,6 +364,7 @@ public class StrongSql {
                         rez = "UPDATE " + myDBHead + " SET pos=" + TekPos.toString() + ", last=" + LastPos.toString() + " WHERE id=1";
                         stmt.executeUpdate(rez);
                         preparedStatement = con.prepareStatement("commit;");
+
                     } catch (SQLException ex) {
                         try {
                             // Возвращаем обратно данные

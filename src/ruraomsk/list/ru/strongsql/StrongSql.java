@@ -46,11 +46,13 @@ public class StrongSql {
     public StrongSql(ParamSQL param) {
         startWork(param);
     }
-    public StrongSql(ParamSQL param,Long SleepTime) {
-        this.SleepTime=SleepTime;
+
+    public StrongSql(ParamSQL param, Long SleepTime) {
+        this.SleepTime = SleepTime;
         startWork(param);
     }
-    private void startWork(ParamSQL param){
+
+    private void startWork(ParamSQL param) {
         paramSQL = param;
         myDBHead = paramSQL.myDB + "_head";
         myDBHeader = paramSQL.myDB + "_header";
@@ -63,8 +65,9 @@ public class StrongSql {
             ctrlSQL = new CtrlSql();
 
         }
-        
+
     }
+
     /**
      * Конструктор с созданием списка таблиц
      *
@@ -97,6 +100,7 @@ public class StrongSql {
 
                     }
                 }
+                rs.close();
             }
         } catch (ClassNotFoundException | SQLException ex) {
         }
@@ -161,7 +165,8 @@ public class StrongSql {
             Integer type = ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
-            ResultSet rs = stmt.executeQuery(rez);
+            ResultSet rs = null;
+            rs = stmt.executeQuery(rez);
             while (rs.next()) {
                 Long tm = rs.getTimestamp("tm").getTime();
                 buffer = rs.getBytes("var");
@@ -217,7 +222,7 @@ public class StrongSql {
 //                System.err.println();
             }
 //            System.err.println("++++++++++++++");
-
+            rs.close();
             return result;
         } catch (SQLException ex) {
             System.err.println("Ошибка SQL " + ex.getMessage());
@@ -245,11 +250,12 @@ public class StrongSql {
             }
 
             wrSQL.interrupt();
-            wrSQL.join(SleepTime*2);
+            wrSQL.join(SleepTime * 2);
             ctrlSQL.interrupt();
-            ctrlSQL.join(SleepTime*2);
+            ctrlSQL.join(SleepTime * 2);
 
             con.commit();
+            stmt.close();
             con.close();
         } catch (SQLException | InterruptedException ex) {
         }
@@ -281,6 +287,7 @@ public class StrongSql {
                 names.put(val.getName(), val);
                 ids.put(val.getId(), val);
             }
+            rr.close();
         } catch (ClassNotFoundException | SQLException ex) {
             System.err.println("Connected " + ex.getMessage());
             return false;
@@ -337,6 +344,13 @@ public class StrongSql {
                 if (errorSQL) {
                     continue;
                 }
+                try {
+                    con.setAutoCommit(false);
+                } catch (SQLException ex) {
+                        System.out.println("Error up no commit " + ex.getMessage());
+                        errorSQL=true;
+                        continue;
+                }
                 SetData value = null;
                 PreparedStatement preparedStatement = null;
                 while ((value = outdata.poll()) != null) {
@@ -364,11 +378,14 @@ public class StrongSql {
                         rez = "UPDATE " + myDBHead + " SET pos=" + TekPos.toString() + ", last=" + LastPos.toString() + " WHERE id=1";
                         stmt.executeUpdate(rez);
                         preparedStatement = con.prepareStatement("commit;");
-
+                        preparedStatement.close();
+                        con.setAutoCommit(true);
                     } catch (SQLException ex) {
                         try {
                             // Возвращаем обратно данные
                             preparedStatement = con.prepareStatement("rollback;");
+                            preparedStatement.close();
+                            con.setAutoCommit(true);
                         } catch (SQLException ex1) {
                         }
 

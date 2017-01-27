@@ -158,15 +158,15 @@ public class StrongSql {
      * @param idseek - переменная для поиска
      * @return - возвращает массив значений переменных с метками времени
      */
-    public ArrayList<SetValue> seekData(Timestamp from, Timestamp to, int idseek) {
+    public synchronized ArrayList<SetValue> seekData(Timestamp from, Timestamp to, int idseek) {
         try {
 //            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
             Integer type = ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
+            HashMap<Long,SetValue> map= new HashMap<>(32000);
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
-            ResultSet rs = null;
-            rs = stmt.executeQuery(rez);
+            ResultSet rs = stmt.executeQuery(rez);
             while (rs.next()) {
                 Long tm = rs.getTimestamp("tm").getTime();
                 buffer = rs.getBytes("var");
@@ -209,7 +209,7 @@ public class StrongSql {
                         }
                         pos += l;
                         value.setGood(buffer[pos++]);
-                        result.add(value);
+                        map.put(tm,value);
                     } else {
                         if (DBtype != 0) {
                             pos += 8;
@@ -222,6 +222,9 @@ public class StrongSql {
 //                System.err.println();
             }
 //            System.err.println("++++++++++++++");
+            for(SetValue sv:map.values()){
+                result.add(sv);
+            }
             rs.close();
             return result;
         } catch (SQLException ex) {

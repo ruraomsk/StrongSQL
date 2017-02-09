@@ -5,6 +5,7 @@
  */
 package ruraomsk.list.ru.strongsql;
 
+import com.tibbo.aggregate.common.Log;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -95,7 +96,6 @@ public class StrongSql {
                     String str = rs.getString(1);
                     if (str.indexOf("_") > 0) {
                         String name = str.substring(0, str.indexOf("_"));
-//                    System.err.println(name);
                         bases.put(name, 0);
 
                     }
@@ -141,7 +141,7 @@ public class StrongSql {
 //            con.commit();
             con.close();
         } catch (ClassNotFoundException | SQLException ex) {
-            System.err.println("Error for create DataBase " + ex.getMessage());
+            Log.CORE.info("Error for create DataBase " + ex.getMessage());
         }
 
     }
@@ -160,7 +160,6 @@ public class StrongSql {
      */
     public synchronized ArrayList<SetValue> seekData(Timestamp from, Timestamp to, int idseek) {
         try {
-//            System.err.println(from.toString()+" "+to.toString());
             byte[] buffer;
             Integer type = ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
@@ -172,12 +171,11 @@ public class StrongSql {
                 buffer = rs.getBytes("var");
                 int pos = 0;
                 while (pos < buffer.length) {
-//                    System.err.print(".");
                     int id = Util.ToInteger(buffer, pos);
                     pos += 4;
                     int l = buffer[pos++];
                     if (l <= 0) {
-                        System.err.println("Длина " + l + " у " + id);
+                        Log.CORE.info("Длина " + l + " у " + id);
                         break;
                     }
                     if (id == idseek) {
@@ -185,7 +183,6 @@ public class StrongSql {
                             tm = Util.ToLong(buffer, pos);
                             pos += 8;
                         }
-//                        System.err.print("!");
                         SetValue value = new SetValue(id, tm, 0);
                         switch (type) {
                             case 0:
@@ -204,7 +201,7 @@ public class StrongSql {
                                 value.setValue(buffer[pos]);
                                 break;
                             default:
-                                System.err.println("\n Неизвестный тип" + type);
+                                Log.CORE.info("\n Неизвестный тип" + type);
 
                         }
                         pos += l;
@@ -219,16 +216,14 @@ public class StrongSql {
                     }
 
                 }
-//                System.err.println();
             }
-//            System.err.println("++++++++++++++");
             for(SetValue sv:map.values()){
                 result.add(sv);
             }
             rs.close();
             return result;
         } catch (SQLException ex) {
-            System.err.println("Ошибка SQL " + ex.getMessage());
+            Log.CORE.info("Ошибка SQL " + ex.getMessage());
             return null;
         }
 
@@ -292,7 +287,7 @@ public class StrongSql {
             }
             rr.close();
         } catch (ClassNotFoundException | SQLException ex) {
-            System.err.println("Connected " + ex.getMessage());
+            Log.CORE.info("Connected " + ex.getMessage());
             return false;
         }
         return true;

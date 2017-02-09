@@ -5,6 +5,8 @@
  */
 package ruraomsk.list.ru.strongsql;
 
+import com.tibbo.aggregate.common.Log;
+
 /**
  * Структура для хранения описаний переменных
  * @author Yury Rusinov <ruraomsk@list.ru Automatics-A Omsk>
@@ -70,7 +72,7 @@ public class DescrValue {
             case 4:
                 return 1;
         }
-        System.err.println("Ошибка типа в DescrValue");
+        Log.CORE.info("Ошибка типа в DescrValue");
         return 1;
     }
 

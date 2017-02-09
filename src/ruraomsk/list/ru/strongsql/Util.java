@@ -5,6 +5,7 @@
  */
 package ruraomsk.list.ru.strongsql;
 
+import com.tibbo.aggregate.common.Log;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -147,7 +148,7 @@ public class Util {
         for (SetValue value : arvalue) {
             DescrValue dv = ids.get(value.getId());
             if (dv == null) {
-                System.err.println("StrongSQL нет такого id=" + value.getId());
+                Log.CORE.info("StrongSQL нет такого id=" + value.getId());
                 continue;
             }
             LenBuffer += 6 + dv.getLenght();
@@ -160,7 +161,7 @@ public class Util {
         for (SetValue sv : arvalue) {
             DescrValue ds = ids.get(sv.getId());
             if (ds == null) {
-                System.err.println("StrongSQL нет такого id=" + sv.getId());
+                Log.CORE.info("StrongSQL нет такого id=" + sv.getId());
                 continue;
             }
             Util.IntegerToBuff(buffer, pos, sv.getId());

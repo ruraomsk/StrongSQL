@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Библиотека для работы с сохраненными значениями переменных
@@ -163,7 +161,7 @@ public class StrongSql {
             byte[] buffer;
             Integer type = ids.get(idseek).getType();
             ArrayList<SetValue> result = new ArrayList<>();
-            HashMap<Long,SetValue> map= new HashMap<>(32000);
+            HashMap<Long, SetValue> map = new HashMap<>(32000);
             String rez = "SELECT tm,var FROM " + myDBData + " WHERE  tm<='" + to.toString() + "' and tm>='" + from.toString() + "' ORDER BY tm ";
             ResultSet rs = stmt.executeQuery(rez);
             while (rs.next()) {
@@ -206,7 +204,7 @@ public class StrongSql {
                         }
                         pos += l;
                         value.setGood(buffer[pos++]);
-                        map.put(tm,value);
+                        map.put(tm, value);
                     } else {
                         if (DBtype != 0) {
                             pos += 8;
@@ -217,7 +215,7 @@ public class StrongSql {
 
                 }
             }
-            for(SetValue sv:map.values()){
+            for (SetValue sv : map.values()) {
                 result.add(sv);
             }
             rs.close();
@@ -345,9 +343,9 @@ public class StrongSql {
                 try {
                     con.setAutoCommit(false);
                 } catch (SQLException ex) {
-                        System.out.println("Error up no commit " + ex.getMessage());
-                        errorSQL=true;
-                        continue;
+                    System.out.println("Error up no commit " + ex.getMessage());
+                    errorSQL = true;
+                    continue;
                 }
                 SetData value = null;
                 PreparedStatement preparedStatement = null;

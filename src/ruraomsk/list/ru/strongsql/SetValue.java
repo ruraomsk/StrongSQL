@@ -14,49 +14,42 @@ import java.sql.Date;
  */
 public class SetValue {
 
-    private Integer id;
+    private String name;
     private Long time;
     private Object value;
     private byte good;
 
-    public SetValue(Integer id, Long time, Object value) {
-        this.id = id;
+    public SetValue(String name, Long time, Object value) {
+        this.name = name;
         this.time = time;
         this.value = value;
         good = 0;
     }
 
-    public SetValue(Integer id, Long time, Object value, byte good) {
-        this.id = id;
+    public SetValue(String name, Long time, Object value, byte good) {
+        this.name = name;
         this.time = time;
         this.value = value;
         this.good = good;
     }
 
-    public SetValue(Integer id, Object value) {
-        this.id = id;
-        this.time = 0L;
+    public SetValue(String name, Object value) {
+        this.name = name;
+        time = 0L;
         this.value = value;
         good = 0;
-    }
-
-    public SetValue(Integer id, Object value, byte good) {
-        this.id = id;
-        this.time = 0L;
-        this.value = value;
-        this.good = good;
     }
 
     @Override
     public String toString() {
-        return "=" + id.toString() + " [" + value.toString() + "] " + (time != 0L ? new Date(time).toString() : "") + (good != 0 ? "!" : ""); //To change body of generated methods, choose Tools | Templates.
+        return "=" + name + " [" + value.toString() + "] " + (time != 0L ? new Date(time).toString() : "") + (good != 0 ? "!" : ""); //To change body of generated methods, choose Tools | Templates.
     }
 
     /**
      * @return the id
      */
-    public Integer getId() {
-        return id;
+    public String getName() {
+        return name;
     }
 
     /**
@@ -71,23 +64,6 @@ public class SetValue {
      */
     public Object getValue() {
         return value;
-    }
-
-    public Float getFloatValue() {
-
-        switch (value.getClass().getName()) {
-            case "java.lang.Boolean":
-                return (boolean) value ? 1.0f : 0.0f;
-            case "java.lang.Integer":
-                return (float) ((int) value);
-            case "java.lang.Float":
-                return (float) value;
-            case "java.lang.Long":
-                return (float) ((long) value & 0xffffffff);
-            case "java.lang.Byte":
-                return (float) ((int) ((byte) value) & 0xff);
-        }
-        return 0f;
     }
 
     /**
@@ -105,4 +81,21 @@ public class SetValue {
         return good;
     }
 
+    public float getFloatValue() {
+        if (value.getClass().getName().equals("java.lang.Boolean")) {
+            if ((boolean) value) {
+                return 1.0f;
+            }
+            return 0.0f;
+        }
+        if (value.getClass().getName().equals("java.lang.Integer")) {
+            Integer val = (int) value;
+            return (float) (val & 0xffffffff);
+        }
+        if (value.getClass().getName().equals("java.lang.Long")) {
+            Long val = (long) value;
+            return (float) (val & 0xffffffff);
+        }
+        return (float) value;
+    }
 }

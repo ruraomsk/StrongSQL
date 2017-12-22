@@ -6,6 +6,7 @@
 package ruraomsk.list.ru.strongsql;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -14,16 +15,14 @@ import java.util.Arrays;
  */
 public class SetData {
     private Timestamp ts;
-    private byte[] var;
+    public ArrayList<SetValue> datas=null;
 
-    public SetData(Timestamp ts, byte[] var) {
+    public SetData(Timestamp ts) {
         this.ts = ts;
-        this.var = var;
+        this.datas = new ArrayList<>(); 
     }
-
-    @Override
-    public String toString() {
-        return ts.toString()+Arrays.toString(var); //To change body of generated methods, choose Tools | Templates.
+    public void AddValue(SetValue value ){
+        datas.add(value);
     }
 
     /**
@@ -33,11 +32,4 @@ public class SetData {
         return ts;
     }
 
-    /**
-     * @return the var
-     */
-    public byte[] getVar() {
-        return var;
-    }
-    
 }

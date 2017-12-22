@@ -14,12 +14,12 @@ import com.tibbo.aggregate.common.Log;
 public class DescrValue {
 
     private String name;
-    private Integer id;
+    private String description;
     private Integer type;
 
-    public DescrValue(String name, Integer id, Integer type) {
+    public DescrValue(String name, String description, Integer type) {
         this.name = name;
-        this.id = id;
+        this.description=description;
         this.type = type;
     }
 //
@@ -32,7 +32,7 @@ public class DescrValue {
 
     @Override
     public String toString() {
-        return "id=" + id.toString() + " type=" + type.toString() + " [" + name + "]";
+        return name + getType() + getDescription();
     }
 
     /**
@@ -43,37 +43,31 @@ public class DescrValue {
     }
 
     /**
-     * @return the id
-     */
-    public Integer getId() {
-        return id;
-    }
-
-    /**
      * @return the type
      */
-    public Integer getType() {
-        return type;
+    public String getType() {
+        switch (type) {
+            case 0:
+                return "boolean";
+            case 1:
+                return "integer";
+            case 2:
+                return "real";
+            case 3:
+                return "bigint";
+            case 4:
+                return "integer";
+        }
+        Log.CORE.info("Ошибка типа в DescrValue");
+        return "integer";
     }
 
     /**
-     * @return the lenght
+     * @return the description
      */
-    public Integer getLenght() {
-        switch (type) {
-            case 0:
-                return 1;
-            case 1:
-                return 2;
-            case 2:
-                return 4;
-            case 3:
-                return 8;
-            case 4:
-                return 1;
-        }
-        Log.CORE.info("Ошибка типа в DescrValue");
-        return 1;
+    public String getDescription() {
+        return description;
     }
+
 
 }

@@ -9,7 +9,6 @@ import com.tibbo.aggregate.common.Log;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.TreeMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -79,7 +78,7 @@ public class StrongSql {
             }
             con.close();
         } catch (ClassNotFoundException | SQLException ex) {
-            Log.CORE.info("Error for create DataBase " + ex.getMessage());
+            Log.CORE.error("Error for create DataBase " + ex.getMessage());
         }
 
     }
@@ -105,7 +104,7 @@ public class StrongSql {
             rs.close();
             return result;
         } catch (SQLException ex) {
-            Log.CORE.info("Ошибка SQL " + ex.getMessage());
+            Log.CORE.error("Ошибка SQL " + ex.getMessage());
             return null;
         }
     }
@@ -149,7 +148,7 @@ public class StrongSql {
         try {
             connectUrl();
         } catch (ClassNotFoundException | SQLException ex) {
-            Log.CORE.info("Connected " + ex.getMessage());
+            Log.CORE.error("Connected " + ex.getMessage());
             return false;
         }
         return true;
@@ -201,7 +200,7 @@ public class StrongSql {
                         rs.close();
                     } catch (SQLException ex) {
                         System.out.println("Error writer " + ex.getMessage());
-                        outdata.add(value);
+//                        outdata.add(value);
                         errorSQL = true;
                         continue;
                     }
